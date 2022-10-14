@@ -1,0 +1,5 @@
+client/target
+server/__pycache__
+server/.mypy_cache
+images/rgba
+images/.png

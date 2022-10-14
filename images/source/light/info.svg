@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="32"
+   height="32"
+   viewBox="0 0 8.4666666 8.4666666"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="info.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:lockguides="true"
+     inkscape:zoom="8.6274963"
+     inkscape:cx="-9.6783582"
+     inkscape:cy="9.1567701"
+     inkscape:window-width="1920"
+     inkscape:window-height="1080"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showguides="true" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path247"
+       style="font-variation-settings:'wght' 537;fill:#000000;fill-rule:evenodd;stroke:#4d4d4d;stroke-width:0;stroke-linecap:round"
+       d="M 4.2333333 0.39842529 A 3.8351309 3.8351309 0 0 0 0.39842529 4.2333333 A 3.8351309 3.8351309 0 0 0 4.2333333 8.0682414 A 3.8351309 3.8351309 0 0 0 8.0682414 4.2333333 A 3.8351309 3.8351309 0 0 0 4.2333333 0.39842529 z M 4.2333333 1.1193115 C 4.4365573 1.1193115 4.5987727 1.1779553 4.7196086 1.2960449 C 4.8404444 1.4113883 4.9004761 1.5583373 4.9004761 1.7368449 C 4.9004761 1.9126062 4.8404444 2.0595552 4.7196086 2.1776449 C 4.5987727 2.2929882 4.4365573 2.3507609 4.2333333 2.3507609 C 4.0301093 2.3507609 3.867894 2.2929882 3.7470581 2.1776449 C 3.6262222 2.0595552 3.5661906 1.9126062 3.5661906 1.7368449 C 3.5661906 1.5583373 3.6262222 1.4113883 3.7470581 1.2960449 C 3.867894 1.1779553 4.0301093 1.1193115 4.2333333 1.1193115 z M 3.6400879 2.8902629 L 4.834847 2.8902629 L 4.834847 7.3473551 L 3.6400879 7.3473551 L 3.6400879 2.8902629 z " />
+  </g>
+</svg>

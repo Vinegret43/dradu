@@ -1,0 +1,19 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+eframe = { version = "0.19", features = ["persistence"] }
+egui_extras = { version = "0.19", features = ["image"]}
+clipboard = "0.5.0" # ?
+
+rand = "0.8"
+rust-ini = "0.18"
+json = "0.12"
+directories = "4.0" # ?
+image = { version = "0.24", features = ["png", "jpeg", "webp", "tiff"] }
+strum = "0.24"
+strum_macros = "0.24"
