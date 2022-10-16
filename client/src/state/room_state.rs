@@ -4,7 +4,7 @@ use eframe::egui;
 use egui::{Color32, Context, Pos2};
 use egui_extras::RetainedImage;
 
-use json::{array, JsonValue};
+use json::{object, JsonValue};
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -12,7 +12,7 @@ use std::path::Path;
 
 use crate::fs::AssetDirHandler;
 use crate::net::{Connection, Message, MsgBody, MsgType};
-use crate::state::map::{MapState, Decal, MapObject, Token};
+use crate::state::map::{Decal, MapObject, MapState, Token};
 use crate::utils;
 use crate::DraduError;
 
@@ -162,18 +162,36 @@ impl<'a> RoomState {
         let path_str = path.to_str().unwrap();
         if !self.images.contains_key(path_str) {
             let image = self.fs.get_retained_image(path)?;
-            self.images.insert(String::from(path_str), image);
+            self.add_image(path_str, image);
         }
         let mut msg = Message::new(MsgType::Map);
-        let mut inner_json = JsonValue::new_object();
-        inner_json.insert("type", "decal");
-        inner_json.insert("path", path.to_str());
-
+        let inner_json = object! {
+            "type": "decal",
+            "path": path_str
+        };
         let mut json = JsonValue::new_object();
         json[utils::random_id()] = inner_json;
+
         msg.attach_body(MsgBody::Json(json));
         self.send_msg(msg);
+        Ok(())
+    }
 
+    pub fn set_background_image<P: AsRef<Path>>(&mut self, path: P) -> Result<(), DraduError> {
+        let path = path.as_ref();
+        let path_str = path.to_str().unwrap();
+        if !self.images.contains_key(path_str) {
+            let image = self.fs.get_retained_image(path)?;
+            self.add_image(path_str, image);
+        }
+        let mut msg = Message::new(MsgType::Map);
+        let json = json::object! {
+            "background": {
+                "path": path_str,
+            }
+        };
+        msg.attach_body(MsgBody::Json(json));
+        self.send_msg(msg);
         Ok(())
     }
 
@@ -181,10 +199,9 @@ impl<'a> RoomState {
     pub fn move_map_object(&mut self, id: &str, pos: Pos2) {
         if self.map.objects.contains_key(id) {
             let mut msg = Message::new(MsgType::Map);
-            let mut inner_json = JsonValue::new_object();
-            inner_json.insert("pos", array![pos.x, pos.y]);
+            let inner_json = object! {"pos": [pos.x, pos.y]};
             let mut json = JsonValue::new_object();
-            json.insert(id, inner_json);
+            json[id] = inner_json;
             msg.attach_body(MsgBody::Json(json));
             self.send_msg(msg);
         }
@@ -210,12 +227,24 @@ impl<'a> RoomState {
         self.players[self.get_user_id()].1
     }
 
+    pub fn is_master(&self) -> bool {
+        self.master
+    }
+
     pub fn get_player_by_id(&self, id: &str) -> Option<&(String, Color32)> {
         self.players.get(id)
     }
 
     fn update_map(&mut self, json: JsonValue) -> Result<(), DraduError> {
         for (id, v) in json.entries() {
+            if id == "background" {
+                let path = v["path"].as_str().ok_or(DraduError::ProtocolError)?;
+                self.map.background_image = Some(String::from(path));
+                if !self.images.contains_key(path) {
+                    self.request_file(path)
+                }
+                continue;
+            }
             if let Some(obj) = self.map.objects.get_mut(id) {
                 match obj {
                     MapObject::Decal(decal) => {

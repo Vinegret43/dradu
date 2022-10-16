@@ -2,7 +2,6 @@
 
 use eframe::egui;
 use egui::Pos2;
-use egui_extras::RetainedImage;
 
 use json::JsonValue;
 
@@ -10,7 +9,7 @@ use std::collections::HashMap;
 
 pub struct MapState {
     pub objects: HashMap<String, MapObject>,
-    pub background_image: Option<RetainedImage>,
+    pub background_image: Option<String>,
     // Is guaranteed to be at least 2x2 or None
     grid: Option<(u16, u16)>,
 }

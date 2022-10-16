@@ -12,8 +12,8 @@ pub struct MapUi {
 
 impl MapUi {
     pub fn update(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
-        if let Some(image) = &room_state.map().background_image {
-            image.show(ui);
+        if let Some(ref image) = &room_state.map().background_image {
+            room_state.get_image(image).show(ui);
         } else {
             ui.allocate_exact_size(Vec2::from([500.0, 500.0]), Sense::click());
         }

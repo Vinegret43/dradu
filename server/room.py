@@ -198,6 +198,10 @@ class Room:
     def update_map(self, json: dict) -> dict:
         delta = {}
         for id, entry in json.items():
+            if id == "background":
+                delta["background"] = {"path": entry["path"]}
+                self.map["background"] = {"path": entry["path"]}
+                continue
             if not entry and id in self.map:
                 del self.map[id]
                 delta[id] = {}
@@ -208,7 +212,6 @@ class Room:
                     and type(entry["pos"]) is list
                     and len(entry["pos"]) == 2
                 ):
-                    print("Changing position")
                     delta[id]["pos"] = entry["pos"]
                     self.map[id]["pos"] = entry["pos"]
                 if "scale" in entry and type(entry["scale"]) is float:

@@ -18,17 +18,6 @@ use crate::DraduError;
 //const HEADER: &str = concat!("DRADU ", env!("CARGO_PKG_VERSION"));
 const HEADER: &str = "DRADU ALPHA";
 
-// &str is the texture name in Textures which will be displayed on the
-// button, enum is the tab to which that button corresponds to.
-// Maybe rewrite this using egui_dock?
-const BUTTONS_AND_TABS: [(&str, Tab); 5] = [
-    ("chat", Tab::Chat),
-    ("info", Tab::Info),
-    ("tools", Tab::Tools),
-    ("images", Tab::Images),
-    ("settings", Tab::Settings),
-];
-
 pub struct MainUi {
     map_ui: MapUi,
     textures: Textures,
@@ -70,13 +59,37 @@ impl MainUi {
                         None => (),
                     }
                     ui.group(|ui| {
-                        for (texture_name, tab) in BUTTONS_AND_TABS {
+                        if ui
+                            .add(ImageButton::new(&self.textures["chat"], [22.0, 22.0]))
+                            .clicked()
+                        {
+                            self.current_tab = Tab::Chat;
+                        }
+                        if ui
+                            .add(ImageButton::new(&self.textures["info"], [22.0, 22.0]))
+                            .clicked()
+                        {
+                            self.current_tab = Tab::Info;
+                        }
+                        if ui
+                            .add(ImageButton::new(&self.textures["tools"], [22.0, 22.0]))
+                            .clicked()
+                        {
+                            self.current_tab = Tab::Tools;
+                        }
+                        if room_state.is_master() {
                             if ui
-                                .add(ImageButton::new(&self.textures[texture_name], [22.0, 22.0]))
+                                .add(ImageButton::new(&self.textures["images"], [22.0, 22.0]))
                                 .clicked()
                             {
-                                self.current_tab = tab;
+                                self.current_tab = Tab::Images;
                             }
+                        }
+                        if ui
+                            .add(ImageButton::new(&self.textures["settings"], [22.0, 22.0]))
+                            .clicked()
+                        {
+                            self.current_tab = Tab::Settings;
                         }
                         self.geometries.tab_panel_width = Some(ui.min_rect().width());
                     });
@@ -188,12 +201,9 @@ impl MainUi {
                 });
         }
         for file in ui.input().raw.dropped_files.iter() {
-            println!(
-                "{:?}",
-                room_state
-                    .fs_ref()
-                    .copy_into(file.path.as_ref().unwrap(), &self.cwd)
-            );
+            room_state
+                .fs_ref()
+                .copy_into(file.path.as_ref().unwrap(), &self.cwd);
         }
         ScrollArea::horizontal().show(ui, |ui| {
             ui.label(format!("{}", self.cwd.display()));
@@ -207,13 +217,19 @@ impl MainUi {
                 let filename_raw = entry.file_name();
                 let filename = filename_raw.to_string_lossy();
                 let is_dir = entry.file_type().unwrap().is_dir();
-                if ui.button(filename.as_ref()).clicked() {
+                let resp = ui.button(filename.as_ref());
+                if resp.clicked() {
                     if is_dir {
                         self.cwd = self.cwd.join(filename.as_ref());
                     } else {
-                        room_state.insert_decal(filename.as_ref());
+                        room_state.insert_decal(self.cwd.join(filename.as_ref()));
                     }
                 }
+                resp.context_menu(|ui| {
+                    if ui.button("Set as BG image").clicked() {
+                        room_state.set_background_image(self.cwd.join(filename.as_ref()));
+                    }
+                });
             }
             if let Some(ref mut string) = self.text_buffers.create_dir {
                 let resp = ui.text_edit_singleline(string);
