@@ -5,10 +5,10 @@ use egui::Pos2;
 
 use json::JsonValue;
 
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 pub struct MapState {
-    pub objects: HashMap<String, MapObject>,
+    pub objects: IndexMap<String, MapObject>,
     pub background_image: Option<String>,
     // Is guaranteed to be at least 2x2 or None
     grid: Option<(u16, u16)>,
@@ -30,7 +30,7 @@ impl MapState {
 impl Default for MapState {
     fn default() -> Self {
         MapState {
-            objects: HashMap::new(),
+            objects: IndexMap::new(),
             background_image: None,
             grid: None,
         }

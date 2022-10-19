@@ -30,6 +30,7 @@ pub struct RelArea {
     default_pos: Pos2,
     // Set with .pos method
     new_pos: Option<Pos2>,
+    ignore_bounds: bool,
 }
 
 impl RelArea {
@@ -45,6 +46,7 @@ impl RelArea {
             enabled: true,
             default_pos: Pos2 { x: 0.0, y: 0.0 },
             new_pos: None,
+            ignore_bounds: false,
         }
     }
 
@@ -105,6 +107,11 @@ impl RelArea {
     /// Initial position. Then it can be changed by mouse drag or .pos() method
     pub fn default_pos(mut self, default_pos: impl Into<Pos2>) -> Self {
         self.default_pos = default_pos.into();
+        self
+    }
+
+    pub fn ignore_bounds(mut self) -> Self {
+        self.ignore_bounds = true;
         self
     }
 }
@@ -181,13 +188,15 @@ impl RelArea {
         }
 
         // Constraining position to its bounds
-        let max_x = parent_ui.max_rect().width() - width;
-        let max_y = parent_ui.max_rect().height() - height;
-        if max_x > 0.0 {
-            pos.x = (pos.x).clamp(0.0, max_x);
-        }
-        if max_y > 0.0 {
-            pos.y = (pos.y).clamp(0.0, max_y)
+        if !self.ignore_bounds {
+            let max_x = parent_ui.max_rect().width() - width;
+            let max_y = parent_ui.max_rect().height() - height;
+            if max_x > 0.0 {
+                pos.x = (pos.x).clamp(0.0, max_x);
+            }
+            if max_y > 0.0 {
+                pos.y = (pos.y).clamp(0.0, max_y)
+            }
         }
 
         // Saving (possibly) new position

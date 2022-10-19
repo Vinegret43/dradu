@@ -207,6 +207,16 @@ impl<'a> RoomState {
         }
     }
 
+    pub fn delete_map_object(&mut self, id: &str) {
+        if self.map.objects.contains_key(id) {
+            let mut msg = Message::new(MsgType::Map);
+            let mut json = JsonValue::new_object();
+            json[id] = object! {};
+            msg.attach_body(MsgBody::Json(json));
+            self.send_msg(msg);
+        }
+    }
+
     pub fn chat_log_ref(&self) -> &Vec<ChatMessage> {
         &self.chat_log
     }
@@ -243,6 +253,10 @@ impl<'a> RoomState {
                 if !self.images.contains_key(path) {
                     self.request_file(path)
                 }
+                continue;
+            }
+            if v.is_empty() {
+                self.map.objects.remove(id);
                 continue;
             }
             if let Some(obj) = self.map.objects.get_mut(id) {
