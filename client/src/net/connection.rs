@@ -153,7 +153,7 @@ fn spawn_receiving_thread(mut stream: TcpStream, ctx: &Context) -> Receiver<Mess
                 Ok(b) if b == b'\n' => {
                     newlines += 1;
                     bytes.push(b);
-                    if newlines == 3 {
+                    if newlines == 2 {
                         break;
                     }
                 }

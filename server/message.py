@@ -40,7 +40,7 @@ class Message:
         for key, val in self.props.items():
             header += f"{key}:{val}\n"
         header += f"contentLength:{len(self.body)}"
-        return sock.send(header.encode() + b"\n\n\n" + self.body)
+        return sock.send(header.encode() + b"\n\n" + self.body)
 
 
 def is_compatible_protocol_ver(ver: str):

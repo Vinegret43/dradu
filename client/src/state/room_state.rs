@@ -217,6 +217,17 @@ impl<'a> RoomState {
         }
     }
 
+    pub fn rescale_map_object(&mut self, id: &str, scale: f32) {
+        if self.map.objects.contains_key(id) {
+            let mut msg = Message::new(MsgType::Map);
+            let inner_json = object! {"scale": scale};
+            let mut json = JsonValue::new_object();
+            json[id] = inner_json;
+            msg.attach_body(MsgBody::Json(json));
+            self.send_msg(msg);
+        }
+    }
+
     pub fn chat_log_ref(&self) -> &Vec<ChatMessage> {
         &self.chat_log
     }

@@ -78,11 +78,12 @@ pub fn random_id() -> String {
 
 // Accepts Json array with two elements
 pub fn json_to_pos(json: &JsonValue) -> Result<Pos2, ()> {
-    if let [x, y] = json.members().take(2).collect::<Vec<&JsonValue>>()[..2] {
-        Ok(Pos2::new(x.as_f32().ok_or(())?, y.as_f32().ok_or(())?))
-    } else {
-        Err(())
+    if json.len() == 2 {
+        if let [x, y] = json.members().take(2).collect::<Vec<&JsonValue>>()[..2] {
+            return Ok(Pos2::new(x.as_f32().ok_or(())?, y.as_f32().ok_or(())?));
+        }
     }
+    Err(())
 }
 
 #[cfg(test)]

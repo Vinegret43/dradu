@@ -44,7 +44,7 @@ def recv_message_header(sock: socket.socket) -> str:
         header += b
         if b == b"\n":
             newlines += 1
-            if newlines == 3:
+            if newlines == 2:
                 break
         else:
             newlines = 0

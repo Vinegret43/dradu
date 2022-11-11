@@ -44,7 +44,7 @@ impl Message {
             None => Vec::new(),
         };
         string.push_str(&format!("contentLength:{}\n", body_bytes.len()));
-        string.push_str("\n\n");
+        string.push_str("\n");
 
         let mut bytes = string.into_bytes();
         bytes.append(&mut body_bytes);
