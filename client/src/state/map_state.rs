@@ -10,21 +10,8 @@ use indexmap::IndexMap;
 pub struct MapState {
     pub objects: IndexMap<String, MapObject>,
     pub background_image: Option<String>,
-    // Is guaranteed to be at least 2x2 or None
-    grid: Option<(u16, u16)>,
-}
-
-impl MapState {
-    pub fn grid(&self) -> Option<(u16, u16)> {
-        self.grid
-    }
-
-    pub fn set_grid(&mut self, grid: Option<(u16, u16)>) {
-        self.grid = match grid {
-            Some((x, y)) if x > 1 && y > 1 => Some((x, y)),
-            _ => None,
-        }
-    }
+    // Columns, rows
+    pub grid: Option<[u8; 2]>,
 }
 
 impl Default for MapState {

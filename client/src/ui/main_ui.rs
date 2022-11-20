@@ -3,7 +3,7 @@ use egui::containers::panel::{CentralPanel, SidePanel};
 use egui::containers::ScrollArea;
 
 use egui::widget_text::RichText;
-use egui::widgets::{Button, ImageButton, Label};
+use egui::widgets::{Button, DragValue, ImageButton, Label};
 use egui::{Align, Align2, Color32, Context, Key, Layout, Ui};
 
 use clipboard::{ClipboardContext, ClipboardProvider};
@@ -12,7 +12,8 @@ use std::path::PathBuf;
 
 use crate::state::RoomState;
 use crate::textures::Textures;
-use crate::ui::{MapUi, RelArea};
+use crate::ui::widgets::RelArea;
+use crate::ui::MapUi;
 use crate::DraduError;
 
 //const HEADER: &str = concat!("DRADU ", env!("CARGO_PKG_VERSION"));
@@ -21,8 +22,7 @@ const HEADER: &str = "DRADU ALPHA";
 pub struct MainUi {
     map_ui: MapUi,
     textures: Textures,
-    geometries: Geometries,
-    text_buffers: TextBuffers,
+    buffers: Buffers,
     current_tab: Tab,
     cwd: PathBuf,
 }
@@ -32,8 +32,7 @@ impl MainUi {
         MainUi {
             map_ui: MapUi::default(),
             textures,
-            geometries: Geometries::default(),
-            text_buffers: TextBuffers::default(),
+            buffers: Buffers::default(),
             current_tab: Tab::Chat,
             cwd: PathBuf::from(""),
         }
@@ -44,7 +43,7 @@ impl MainUi {
     pub fn update(&mut self, ctx: &Context, room_state: &mut RoomState) -> Result<(), DraduError> {
         let screen_width = ctx.input().screen_rect().width();
         SidePanel::left("ul0")
-            .min_width(self.geometries.tab_panel_width.unwrap_or(0.0) + 16.0)
+            .min_width(self.buffers.tab_panel_width.unwrap_or(0.0) + 16.0)
             .max_width(screen_width / 2.0)
             .show(ctx, |ui| -> Result<(), DraduError> {
                 ui.vertical_centered(|ui| {
@@ -54,7 +53,7 @@ impl MainUi {
                 ui.separator();
 
                 ui.horizontal(|ui| {
-                    match self.geometries.tab_panel_width {
+                    match self.buffers.tab_panel_width {
                         Some(w) => ui.add_space((ui.available_width() - w - 16.0) / 2.0),
                         None => (),
                     }
@@ -91,7 +90,7 @@ impl MainUi {
                         {
                             self.current_tab = Tab::Settings;
                         }
-                        self.geometries.tab_panel_width = Some(ui.min_rect().width());
+                        self.buffers.tab_panel_width = Some(ui.min_rect().width());
                     });
                 });
 
@@ -100,7 +99,7 @@ impl MainUi {
                 match self.current_tab {
                     Tab::Chat => self.display_chat(ui, room_state),
                     Tab::Info => self.display_info(ui, room_state)?,
-                    Tab::Tools => self.display_tools(ui),
+                    Tab::Tools => self.display_tools(ui, room_state),
                     Tab::Images => self.display_images_dialog(ui, room_state),
                     Tab::Settings => self.display_settings(ui, room_state),
                 };
@@ -128,18 +127,18 @@ impl MainUi {
                 "Send",
             ));
             if response.clicked() {
-                room_state.send_chat_message(&self.text_buffers.chat_input);
-                self.text_buffers.chat_input.clear();
+                room_state.send_chat_message(&self.buffers.chat_input);
+                self.buffers.chat_input.clear();
             }
             response.on_hover_text("You can also use Ctrl+Enter");
             ui.add_space(5.0);
             if ui
-                .text_edit_multiline(&mut self.text_buffers.chat_input)
+                .text_edit_multiline(&mut self.buffers.chat_input)
                 .has_focus()
             {
                 if ui.input().modifiers.ctrl && ui.input().key_pressed(Key::Enter) {
-                    room_state.send_chat_message(&self.text_buffers.chat_input);
-                    self.text_buffers.chat_input.clear();
+                    room_state.send_chat_message(&self.buffers.chat_input);
+                    self.buffers.chat_input.clear();
                 }
             }
             ui.add_space(5.0);
@@ -188,8 +187,39 @@ impl MainUi {
         Ok(())
     }
 
-    fn display_tools(&mut self, ui: &mut Ui) {
-        ui.label("TOOLS");
+    fn display_tools(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
+        ui.horizontal(|ui| {
+            ui.heading("Grid");
+            if ui.checkbox(&mut self.buffers.grid_enabled, "").changed() {
+                if self.buffers.grid_enabled {
+                    room_state.change_grid_size(self.buffers.grid_size);
+                } else {
+                    room_state.change_grid_size([0, 0]);
+                }
+            }
+        });
+        ui.add_enabled_ui(self.buffers.grid_enabled, |ui| {
+            ui.indent("ui0", |ui| {
+                ui.horizontal(|ui| {
+                    let r1 =
+                        ui.add(DragValue::new(&mut self.buffers.grid_size[0]).clamp_range(2..=255));
+                    ui.label("by");
+                    let r2 =
+                        ui.add(DragValue::new(&mut self.buffers.grid_size[1]).clamp_range(2..=255));
+                    let union = r1.union(r2);
+                    if union.changed() {
+                        room_state.change_grid_size(self.buffers.grid_size);
+                    } else if !union.dragged() {
+                        if let Some(grid_size) = room_state.map().grid {
+                            self.buffers.grid_enabled = true;
+                            self.buffers.grid_size = grid_size;
+                        } else {
+                            self.buffers.grid_enabled = false;
+                        }
+                    }
+                });
+            });
+        });
     }
 
     fn display_images_dialog(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
@@ -231,19 +261,19 @@ impl MainUi {
                     }
                 });
             }
-            if let Some(ref mut string) = self.text_buffers.create_dir {
+            if let Some(ref mut string) = self.buffers.create_dir {
                 let resp = ui.text_edit_singleline(string);
                 if resp.lost_focus() {
                     if ui.input().key_pressed(Key::Enter) {
                         room_state.fs_ref().create_dir(&self.cwd.join(string));
                     }
-                    self.text_buffers.create_dir = None;
+                    self.buffers.create_dir = None;
                 } else {
                     resp.request_focus();
                 }
             } else {
                 if ui.button("+").clicked() {
-                    self.text_buffers.create_dir = Some(String::new());
+                    self.buffers.create_dir = Some(String::new());
                 }
             }
         });
@@ -269,15 +299,24 @@ enum Tab {
     Settings,
 }
 
-#[derive(Default)]
-struct Geometries {
+struct Buffers {
+    grid_enabled: bool,
+    grid_size: [u8; 2],
     tab_panel_width: Option<f32>,
-}
-
-#[derive(Default)]
-struct TextBuffers {
     create_dir: Option<String>,
     chat_input: String,
+}
+
+impl Default for Buffers {
+    fn default() -> Self {
+        Self {
+            grid_enabled: false,
+            grid_size: [2, 2],
+            tab_panel_width: None,
+            create_dir: None,
+            chat_input: String::new(),
+        }
+    }
 }
 
 fn repr_player(color: Color32, nick: &str, id: &str) -> Label {

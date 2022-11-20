@@ -202,7 +202,22 @@ class Room:
                 delta["background"] = {"path": entry["path"]}
                 self.map["background"] = {"path": entry["path"]}
                 continue
-            if not entry and id in self.map:
+            elif id == "grid":
+                if not entry:
+                    del self.map[id]
+                    delta[id] = {}
+                else:
+                    size = entry["size"]
+                    assert 2 <= size[0] < 256
+                    assert 2 <= size[1] < 256
+                    obj = {
+                        "size": [int(size[0]), int(size[1])]
+                    }
+                    self.map[id] = obj
+                    delta[id] = obj
+                continue
+
+            if not entry:
                 del self.map[id]
                 delta[id] = {}
             elif id in self.map:

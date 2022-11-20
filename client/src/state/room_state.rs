@@ -78,30 +78,22 @@ impl<'a> RoomState {
     pub fn update_self(&mut self) -> Result<(), DraduError> {
         let new_messages = self.connection.new_messages()?;
         for mut msg in new_messages {
-            match msg.msg_type() {
-                MsgType::Map => {
-                    if let Some(MsgBody::Json(json)) = msg.take_body() {
-                        self.update_map(json)?;
+            match (msg.msg_type(), msg.take_body()) {
+                (MsgType::Map, Some(MsgBody::Json(json))) => {
+                    self.update_map(json)?;
+                }
+                (MsgType::Player, Some(MsgBody::Json(json))) => {
+                    self.update_players(json)?;
+                }
+                (MsgType::Msg, Some(MsgBody::Text(text))) => {
+                    if let Some(user_id) = msg.get_prop("userId") {
+                        self.update_chat_log(user_id.to_owned(), text);
                     }
                 }
-                MsgType::Player => {
-                    if let Some(MsgBody::Json(json)) = msg.take_body() {
-                        self.update_players(json)?;
-                    }
+                (MsgType::Perm, Some(MsgBody::Json(json))) => {
+                    self.update_permissions(json); // TODO
                 }
-                MsgType::Msg => {
-                    if let Some(MsgBody::Text(text)) = msg.take_body() {
-                        if let Some(user_id) = msg.get_prop("userId") {
-                            self.update_chat_log(user_id.to_owned(), text);
-                        }
-                    }
-                }
-                MsgType::Perm => {
-                    if let Some(MsgBody::Json(json)) = msg.take_body() {
-                        self.update_permissions(json); // TODO
-                    }
-                }
-                MsgType::File => {
+                (MsgType::File, body) => {
                     if self.master {
                         if let Some(s) = msg.get_prop("path") {
                             if let Ok(bytes) = self.fs.read_file(s) {
@@ -113,13 +105,13 @@ impl<'a> RoomState {
                             }
                         }
                     } else {
-                        if let Some(MsgBody::Image(image)) = msg.take_body() {
+                        if let Some(MsgBody::Image(image)) = body {
                             self.add_image(msg.get_prop("path").unwrap_or(""), image)
                         }
                     }
                 }
-                MsgType::Synced => {}
-                MsgType::Err => (),
+                (MsgType::Synced, _) => {}
+                (MsgType::Err, _) => (),
                 _ => (),
             }
         }
@@ -228,6 +220,23 @@ impl<'a> RoomState {
         }
     }
 
+    pub fn change_grid_size(&mut self, size: [u8; 2]) {
+        let mut msg = Message::new(MsgType::Map);
+        let json = if size[0] >= 2 && size[1] >= 2 {
+            object! {
+                "grid": {
+                    "size": [size[0], size[1]],
+                }
+            }
+        } else {
+            object! {
+                "grid": {}
+            }
+        };
+        msg.attach_body(MsgBody::Json(json));
+        self.send_msg(msg);
+    }
+
     pub fn chat_log_ref(&self) -> &Vec<ChatMessage> {
         &self.chat_log
     }
@@ -256,6 +265,7 @@ impl<'a> RoomState {
         self.players.get(id)
     }
 
+    // TODO: Refactor this method
     fn update_map(&mut self, json: JsonValue) -> Result<(), DraduError> {
         for (id, v) in json.entries() {
             if id == "background" {
@@ -263,6 +273,16 @@ impl<'a> RoomState {
                 self.map.background_image = Some(String::from(path));
                 if !self.images.contains_key(path) {
                     self.request_file(path)
+                }
+                continue;
+            } else if id == "grid" {
+                if v.is_empty() {
+                    self.map.grid = None;
+                } else {
+                    let size = &v["size"];
+                    let columns = size[0].as_u8().ok_or(DraduError::ProtocolError)?;
+                    let rows = size[1].as_u8().ok_or(DraduError::ProtocolError)?;
+                    self.map.grid = Some([columns, rows]);
                 }
                 continue;
             }
