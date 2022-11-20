@@ -6,6 +6,9 @@ to run both natively and in browser - make a better replacement for those
 proprietary and laggy VTTs
 
 
+![Dradu screenshot](dradu_screenshot.png)
+
+
 ## Current state
 
 This project is SO raw it's not even usable, however, this
