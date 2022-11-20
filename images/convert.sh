@@ -15,6 +15,11 @@
 # 4. Copy/paste generated output into textures.rs
 # 5. Run `cp -r ./rgba/* <path_to_client>/assets/img/`
 
+mkdir .png 2> /dev/null
+mkdir .png/general .png/light 2> /dev/null
+mkdir rgba 2> /dev/null
+mkdir rgba/dark rgba/light rgba/general 2> /dev/null
+
 log() {
   echo -e "\033[33m$@\033[0m" >&2
 }

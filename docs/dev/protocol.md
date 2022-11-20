@@ -60,6 +60,8 @@ Can be in caps or not, matching them shouldn't be case-sensitive
   userCookie:<Your user cookie>
   ```
 
+  **Note**: there are some special item IDs. See _Special map IDs_ for that
+
   _Body:_
 
   ```json5
@@ -262,3 +264,16 @@ listen for incoming messages
 
 - **SYNCED**  
   WIP
+
+# Special map IDs
+
+Usually ID is just a string of 16 random alphabet+numeric characters, but there
+are some special IDs, which have their own meaning and properties. They include:
+
+ - **background** - Background image. Has `path` in its JSON properties,
+  containing path to the image Dradu should use as the background
+
+ - **grid** - Grid which is drawn on top of the map. Has one property: `size`,
+  which is an array of 2 integers from 0 to 255 - number of columns and rows.
+  If one of those integers is 0 or 1, columns/rows won't be displayed at all
+
