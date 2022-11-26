@@ -51,6 +51,14 @@ impl MapObject {
             _ => Err(DraduError::ProtocolError),
         }
     }
+
+    pub fn path(&self) -> &str {
+        match self {
+            Self::Decal(decal) => &decal.path,
+            Self::Token(token) => &token.path,
+            Self::Wall(wall) => &wall.path,
+        }
+    }
 }
 
 pub struct Decal {

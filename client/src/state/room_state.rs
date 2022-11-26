@@ -271,9 +271,11 @@ impl<'a> RoomState {
                 if let Some(obj) = self.map.objects.get_mut(id) {
                     obj.update_from_json(&entry)?;
                 } else {
-                    self.map
-                        .objects
-                        .insert(id.to_string(), MapObject::create_from_json(&entry)?);
+                    let obj = MapObject::create_from_json(&entry)?;
+                    if !self.images.contains_key(obj.path()) {
+                        self.request_file(obj.path())
+                    }
+                    self.map.objects.insert(id.to_string(), obj);
                 }
             }
         }
