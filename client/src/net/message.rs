@@ -162,7 +162,7 @@ pub enum MsgType {
 
 #[cfg(test)]
 mod tests {
-    use crate::net::{Message, MsgType};
+    use crate::net::{Message, MsgType, PROTOCOL_VERSION};
     use std::collections::HashMap;
     use std::str::FromStr;
 
@@ -175,8 +175,16 @@ mod tests {
             props,
             body: None,
         };
-        let bytes = b"dradu/0.1 File\ncontentLength:0\nuserId:123\n\n\n";
-        let bytes2 = b"dradu/0.1 File\nuserId:123\ncontentLength:0\n\n\n";
+        let bytes = format!(
+            "dradu/{} File\ncontentLength:0\nuserId:123\n\n",
+            PROTOCOL_VERSION
+        )
+        .into_bytes();
+        let bytes2 = format!(
+            "dradu/{} File\nuserId:123\ncontentLength:0\n\n",
+            PROTOCOL_VERSION
+        )
+        .into_bytes();
         let msg_bytes = msg.into_bytes();
         assert!(msg_bytes == bytes || msg_bytes == bytes2);
     }

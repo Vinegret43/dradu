@@ -7,6 +7,9 @@ use json::JsonValue;
 
 use indexmap::IndexMap;
 
+use crate::utils;
+use crate::DraduError;
+
 pub struct MapState {
     pub objects: IndexMap<String, MapObject>,
     pub background_image: Option<String>,
@@ -30,15 +33,56 @@ pub enum MapObject {
     Wall(Wall),
 }
 
+impl MapObject {
+    pub fn update_from_json(&mut self, json: &JsonValue) -> Result<(), DraduError> {
+        match self {
+            MapObject::Decal(decal) => decal.update_from_json(json),
+            MapObject::Token(token) => token.update_from_json(json),
+            MapObject::Wall(_) => unimplemented!(),
+        }
+    }
+
+    pub fn create_from_json(json: &JsonValue) -> Result<Self, DraduError> {
+        match json["type"].as_str().ok_or(DraduError::ProtocolError)? {
+            "token" => Ok(Self::Token(Token::create_from_json(json)?)),
+            "decal" => Ok(Self::Decal(Decal::create_from_json(json)?)),
+            "wall" => unimplemented!(),
+            "effect" => unimplemented!(),
+            _ => Err(DraduError::ProtocolError),
+        }
+    }
+}
+
 pub struct Decal {
-    pub id: String,
     pub pos: Pos2,
     pub scale: f32,
     pub path: String,
 }
 
+impl Decal {
+    fn update_from_json(&mut self, json: &JsonValue) -> Result<(), DraduError> {
+        if let Ok(pos) = utils::json_to_pos(&json["pos"]) {
+            self.pos = pos;
+        }
+        if let Some(scale) = json["scale"].as_f32() {
+            self.scale = scale;
+        }
+        Ok(())
+    }
+
+    fn create_from_json(json: &JsonValue) -> Result<Self, DraduError> {
+        Ok(Self {
+            pos: utils::json_to_pos(&json["pos"]).unwrap_or(Pos2::new(0.0, 0.0)),
+            scale: json["scale"].as_f32().unwrap_or(1.0),
+            path: json["path"]
+                .as_str()
+                .ok_or(DraduError::ProtocolError)?
+                .to_owned(),
+        })
+    }
+}
+
 pub struct Token {
-    pub id: String,
     pub pos: Pos2,
     pub scale: f32,
     pub path: String,
@@ -46,8 +90,32 @@ pub struct Token {
     pub attributes: JsonValue,
 }
 
+impl Token {
+    fn update_from_json(&mut self, json: &JsonValue) -> Result<(), DraduError> {
+        if let Ok(pos) = utils::json_to_pos(&json["pos"]) {
+            self.pos = pos;
+        }
+        if let Some(scale) = json["scale"].as_f32() {
+            self.scale = scale;
+        }
+        Ok(())
+    }
+
+    fn create_from_json(json: &JsonValue) -> Result<Self, DraduError> {
+        Ok(Self {
+            pos: utils::json_to_pos(&json["pos"]).unwrap_or(Pos2::new(0.0, 0.0)),
+            scale: json["scale"].as_f32().unwrap_or(1.0),
+            path: json["path"]
+                .as_str()
+                .ok_or(DraduError::ProtocolError)?
+                .to_owned(),
+            attributes: json["attributes"].clone(),
+        })
+    }
+}
+
 pub struct Wall {
-    id: String,
-    nodes: Vec<Pos2>,
-    path: String,
+    pub pos: Pos2,
+    pub nodes: Vec<Pos2>,
+    pub path: String,
 }

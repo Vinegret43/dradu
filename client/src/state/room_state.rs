@@ -1,5 +1,3 @@
-// TODO: This file has some very bloated and ugly methods, they need refactoring
-
 use eframe::egui;
 use egui::{Color32, Context, Pos2};
 use egui_extras::RetainedImage;
@@ -12,7 +10,7 @@ use std::path::Path;
 
 use crate::fs::AssetDirHandler;
 use crate::net::{Connection, Message, MsgBody, MsgType};
-use crate::state::map::{Decal, MapObject, MapState, Token};
+use crate::state::map::{MapObject, MapState};
 use crate::utils;
 use crate::DraduError;
 
@@ -144,9 +142,6 @@ impl<'a> RoomState {
         let mut msg = Message::new(MsgType::Msg);
         msg.attach_body(MsgBody::Text(text.to_owned()));
         self.send_msg(msg);
-        if !text.starts_with('/') {
-            self.update_chat_log(self.connection.get_user_id().to_owned(), text.to_owned());
-        }
     }
 
     pub fn insert_decal<P: AsRef<Path>>(&mut self, path: P) -> Result<(), DraduError> {
@@ -187,7 +182,6 @@ impl<'a> RoomState {
         Ok(())
     }
 
-    // FIXME: No bounds, nor permission checks
     pub fn move_map_object(&mut self, id: &str, pos: Pos2) {
         if self.map.objects.contains_key(id) {
             let mut msg = Message::new(MsgType::Map);
@@ -249,14 +243,6 @@ impl<'a> RoomState {
         self.connection.get_user_id()
     }
 
-    pub fn get_nickname(&self) -> &str {
-        &self.players[self.get_user_id()].0
-    }
-
-    pub fn get_user_color(&self) -> Color32 {
-        self.players[self.get_user_id()].1
-    }
-
     pub fn is_master(&self) -> bool {
         self.master
     }
@@ -267,84 +253,54 @@ impl<'a> RoomState {
 
     // TODO: Refactor this method
     fn update_map(&mut self, json: JsonValue) -> Result<(), DraduError> {
-        for (id, v) in json.entries() {
-            if id == "background" {
-                let path = v["path"].as_str().ok_or(DraduError::ProtocolError)?;
-                self.map.background_image = Some(String::from(path));
-                if !self.images.contains_key(path) {
-                    self.request_file(path)
-                }
-                continue;
-            } else if id == "grid" {
-                if v.is_empty() {
-                    self.map.grid = None;
-                } else {
-                    let size = &v["size"];
-                    let columns = size[0].as_u8().ok_or(DraduError::ProtocolError)?;
-                    let rows = size[1].as_u8().ok_or(DraduError::ProtocolError)?;
-                    self.map.grid = Some([columns, rows]);
-                }
-                continue;
-            }
-            if v.is_empty() {
+        // Reset entire map
+        if json.is_null() {
+            self.map = MapState::default();
+        }
+
+        for (id, entry) in json.entries() {
+            // Firstly checking for special-case scenarios
+            if id == "grid" {
+                self.update_grid(entry)?;
+            } else if id == "background" {
+                self.update_background(entry)?;
+            } else if entry.is_empty() {
                 self.map.objects.remove(id);
-                continue;
-            }
-            if let Some(obj) = self.map.objects.get_mut(id) {
-                match obj {
-                    MapObject::Decal(decal) => {
-                        if let Ok(pos) = utils::json_to_pos(&v["pos"]) {
-                            decal.pos = pos;
-                        }
-                        if let Some(scale) = v["scale"].as_f32() {
-                            decal.scale = scale;
-                        }
-                    }
-                    MapObject::Token(token) => {
-                        if let Ok(pos) = utils::json_to_pos(&v["pos"]) {
-                            token.pos = pos;
-                        }
-                        if let Some(scale) = v["scale"].as_f32() {
-                            token.scale = scale;
-                        }
-                    }
-                    _ => (),
-                }
             } else {
-                let path = v["path"].as_str().ok_or(DraduError::ProtocolError)?;
-                match v["type"].as_str().ok_or(DraduError::ProtocolError)? {
-                    "token" => {
-                        self.map.objects.insert(
-                            id.to_string(),
-                            MapObject::Token(Token {
-                                id: id.to_string(),
-                                pos: utils::json_to_pos(&v["pos"]).unwrap_or(Pos2::new(0.0, 0.0)),
-                                scale: v["scale"].as_f32().unwrap_or(1.0),
-                                path: path.to_string(),
-                                attributes: v["attributes"].clone(),
-                            }),
-                        );
-                    }
-                    "decal" => {
-                        self.map.objects.insert(
-                            id.to_string(),
-                            MapObject::Decal(Decal {
-                                id: id.to_string(),
-                                pos: utils::json_to_pos(&v["pos"]).unwrap_or(Pos2::new(0.0, 0.0)),
-                                scale: v["scale"].as_f32().unwrap_or(1.0),
-                                path: path.to_string(),
-                            }),
-                        );
-                    }
-                    _ => (),
-                }
-                if !self.images.contains_key(path) {
-                    self.request_file(path);
+                // Otherwise just normally updating all the objects
+                if let Some(obj) = self.map.objects.get_mut(id) {
+                    obj.update_from_json(&entry)?;
+                } else {
+                    self.map
+                        .objects
+                        .insert(id.to_string(), MapObject::create_from_json(&entry)?);
                 }
             }
         }
         Ok(())
     }
+
+    fn update_grid(&mut self, json: &JsonValue) -> Result<(), DraduError> {
+        if json.is_empty() {
+            self.map.grid = None;
+        } else {
+            let size = &json["size"];
+            let columns = size[0].as_u8().ok_or(DraduError::ProtocolError)?;
+            let rows = size[1].as_u8().ok_or(DraduError::ProtocolError)?;
+            self.map.grid = Some([columns, rows]);
+        }
+        Ok(())
+    }
+
+    fn update_background(&mut self, json: &JsonValue) -> Result<(), DraduError> {
+        let path = json["path"].as_str().ok_or(DraduError::ProtocolError)?;
+        self.map.background_image = Some(String::from(path));
+        if !self.images.contains_key(path) {
+            self.request_file(path)
+        }
+        Ok(())
+    }
+
     fn update_players(&mut self, json: JsonValue) -> Result<(), DraduError> {
         for (k, v) in json.entries() {
             if v.is_empty() {

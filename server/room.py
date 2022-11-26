@@ -101,8 +101,7 @@ class Room:
                             )
                             # FIXME: Checking for permissions
                             for i in self.player_sockets:
-                                if i is not sock:
-                                    msg_to_send.send(i)
+                                msg_to_send.send(i)
                 except BaseException as e:
                     print(e)
                     self.remove_player(index)

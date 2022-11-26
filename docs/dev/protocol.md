@@ -72,6 +72,17 @@ Can be in caps or not, matching them shouldn't be case-sensitive
       "path": "path/to/image.png",  // Also see FILE message type
       "scale": 1.0,
       "pos": [x, y],
+      // Only allowed if "type" is "token"
+      "properties": {
+        // You should be able to set custom properties with any name. Some of
+        // these properties may be treated by the client in a special way
+        // (e.g. a health bar may be displayed right under the token)
+        "health": 10,
+        "max_health": 10,
+        "armor": 10,
+        "conditions": ["shocked", "bleeding", "etc."],
+        // etc.
+      }
     },
 
     // Example of moving an object. Same thing for rescaling (You can include

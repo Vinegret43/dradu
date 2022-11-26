@@ -66,7 +66,7 @@ impl MapUi {
                         }
                     }
 
-                    let (pos, resp) = RelArea::new(&decal.id)
+                    let (pos, resp) = RelArea::new(&id)
                         .set_dragging(Dragging::Prioritized)
                         .set_pos(decal.pos)
                         .show_inside(ui, |ui| match &self.selected_item {
@@ -80,7 +80,7 @@ impl MapUi {
                         Some(selected_item) if selected_item == id => {
                             // Drawing frame around selected object.
                             // Using a tuple to make hash different from the one above
-                            let (_, frame_resp) = RelArea::new((&decal.id, 0))
+                            let (_, frame_resp) = RelArea::new((&id, 0))
                                 .set_dragging(Dragging::Disabled)
                                 .ignore_bounds()
                                 .set_pos(pos)
@@ -103,7 +103,7 @@ impl MapUi {
                                     });
                                 });
                             // Drawing the resize thing (Slider)
-                            let (slider_pos, slider_resp) = RelArea::new((&decal.id, 1))
+                            let (slider_pos, slider_resp) = RelArea::new((&id, 1))
                                 .ignore_bounds()
                                 .set_dragging(Dragging::Prioritized)
                                 .set_pos(Pos2::new(
@@ -160,7 +160,7 @@ impl MapUi {
                     }
                 }
                 MapObject::Token(token) => {
-                    RelArea::new(&token.id)
+                    RelArea::new(&id)
                         .set_dragging(Dragging::Prioritized)
                         .set_pos(token.pos)
                         .show_inside(ui, |ui| {
