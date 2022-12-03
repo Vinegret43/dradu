@@ -47,3 +47,10 @@ commands:
 
  - `/nickname <NAME>` `/nick <NAME>` - Change your nickname
  - `/color <R> <G> <B>` - Change your nickname color. RGB values are from 0 to 255
+
+## Project roadmap for the near future
+ - [ ] Add tokens with attributes (Health, armor, etc.)
+ - [ ] Implement saving/loading entire maps
+ - [ ] Add ability to move objects up/down a layer
+ - [ ] Dice rolling
+ - [ ] Built-in loopback server used for creating maps
