@@ -52,6 +52,22 @@ impl MapObject {
         }
     }
 
+    pub fn pos(&self) -> Pos2 {
+        match self {
+            Self::Decal(decal) => decal.pos,
+            Self::Token(token) => token.pos,
+            Self::Wall(wall) => wall.pos,
+        }
+    }
+
+    pub fn scale(&self) -> f32 {
+        match self {
+            Self::Decal(decal) => decal.scale,
+            Self::Token(token) => token.scale,
+            Self::Wall(_) => 1.0,
+        }
+    }
+
     pub fn path(&self) -> &str {
         match self {
             Self::Decal(decal) => &decal.path,

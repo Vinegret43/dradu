@@ -2,7 +2,7 @@
 
 use std::{fmt::Debug, hash::Hash};
 
-use eframe::egui::{Align, Align2, Id, InnerResponse, Layout, Pos2, Rect, Sense, Ui};
+use eframe::egui::{Align, Align2, Id, Layout, Pos2, Rect, Response, Sense, Ui};
 
 // Can it be dragged with mouse? If set to Prioritized, it will prioritize
 // mouse drag over setting position with .pos(), however, when you let
@@ -123,7 +123,7 @@ impl RelArea {
         self,
         parent_ui: &mut Ui,
         add_contents: impl FnOnce(&mut Ui) -> R,
-    ) -> (Pos2, InnerResponse<R>) {
+    ) -> RelAreaResponse<R> {
         // Loading last known position
         let mut pos = parent_ui
             .ctx()
@@ -202,6 +202,16 @@ impl RelArea {
         // Saving (possibly) new position
         parent_ui.ctx().memory().data.insert_temp(self.id, pos);
 
-        (pos, InnerResponse::new(inner_response, response))
+        RelAreaResponse {
+            inner_response,
+            response,
+            current_pos: pos,
+        }
     }
+}
+
+pub struct RelAreaResponse<T> {
+    pub response: Response,
+    pub inner_response: T,
+    pub current_pos: Pos2,
 }

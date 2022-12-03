@@ -4,7 +4,7 @@ use egui::containers::ScrollArea;
 
 use egui::widget_text::RichText;
 use egui::widgets::{Button, DragValue, ImageButton, Label};
-use egui::{Align, Align2, Color32, Context, Key, Layout, Ui};
+use egui::{Align, Align2, Area, Color32, Context, Frame, Key, Layout, Ui};
 
 use clipboard::{ClipboardContext, ClipboardProvider};
 
@@ -113,9 +113,32 @@ impl MainUi {
                 .always_show_scroll(true)
                 .show(ui, |ui| {
                     self.map_ui.update(ui, room_state);
-                });
+                })
         });
+        self.display_map_overlay_ui(ctx);
         Ok(())
+    }
+
+    fn display_map_overlay_ui(&mut self, ctx: &Context) {
+        // UI to change scale of the map
+        Area::new("ma0")
+            .anchor(Align2::LEFT_TOP, (5.0, 5.0))
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    Frame::popup(ui.style()).show(ui, |ui| {
+                        if ui.button(RichText::new("+").monospace()).clicked() {
+                            self.map_ui.global_scale += 0.1;
+                        }
+                        if ui.button(RichText::new("-").monospace()).clicked() {
+                            self.map_ui.global_scale -= 0.1;
+                        }
+                        ui.label(format!("{:.0}%", self.map_ui.global_scale * 100.0));
+                    });
+                })
+            });
+        // User should also be able to change scale using Ctrl+Scrl
+        self.map_ui.global_scale += ctx.input().zoom_delta() - 1.0;
+        self.map_ui.global_scale = self.map_ui.global_scale.clamp(0.01, 10.0);
     }
 
     fn display_chat(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
