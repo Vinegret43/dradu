@@ -1,7 +1,5 @@
 use egui_extras::RetainedImage;
 
-use directories::ProjectDirs;
-
 use std::fs::{self, File, ReadDir};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -20,8 +18,7 @@ pub struct AssetDirHandler {
 
 impl AssetDirHandler {
     pub fn new() -> Self {
-        let asset_dir = if let Some(dirs) = ProjectDirs::from("com.github", "vinegret43", "dradu") {
-            let mut path = dirs.data_dir().to_path_buf();
+        let asset_dir = if let Some(mut path) = utils::local_dir() {
             path.push("assets");
             if !path.exists() {
                 #[allow(unused)]

@@ -3,7 +3,7 @@
 use eframe::egui;
 use egui::Pos2;
 
-use json::JsonValue;
+use json::{object, JsonValue};
 
 use indexmap::IndexMap;
 
@@ -24,6 +24,26 @@ impl Default for MapState {
             background_image: None,
             grid: None,
         }
+    }
+}
+
+impl MapState {
+    pub fn as_json(&self) -> JsonValue {
+        let mut json = object! {};
+        if let Some(grid) = self.grid {
+            json["gird"] = object! {
+                "size": grid.to_vec(),
+            };
+        }
+        if let Some(bg_path) = &self.background_image {
+            json["background"] = object! {
+                "path": bg_path.clone(),
+            };
+        }
+        for (id, obj) in self.objects.iter() {
+            json[id] = obj.as_json();
+        }
+        json
     }
 }
 
@@ -75,6 +95,14 @@ impl MapObject {
             Self::Wall(wall) => &wall.path,
         }
     }
+
+    pub fn as_json(&self) -> JsonValue {
+        match self {
+            Self::Decal(decal) => decal.as_json(),
+            Self::Token(token) => token.as_json(),
+            Self::Wall(_) => unimplemented!(),
+        }
+    }
 }
 
 pub struct Decal {
@@ -104,6 +132,15 @@ impl Decal {
                 .to_owned(),
         })
     }
+
+    fn as_json(&self) -> JsonValue {
+        object! {
+            "type": "decal",
+            "pos": [self.pos.x, self.pos.y],
+            "scale": self.scale,
+            "path": self.path.clone(),
+        }
+    }
 }
 
 pub struct Token {
@@ -111,7 +148,7 @@ pub struct Token {
     pub scale: f32,
     pub path: String,
     // Additional things like health, armor, etc.
-    pub attributes: JsonValue,
+    pub properties: JsonValue,
 }
 
 impl Token {
@@ -133,8 +170,18 @@ impl Token {
                 .as_str()
                 .ok_or(DraduError::ProtocolError)?
                 .to_owned(),
-            attributes: json["attributes"].clone(),
+            properties: json["properties"].clone(),
         })
+    }
+
+    fn as_json(&self) -> JsonValue {
+        object! {
+            "type": "decal",
+            "pos": [self.pos.x, self.pos.y],
+            "scale": self.scale,
+            "path": self.path.clone(),
+            "properties": self.properties.clone(),
+        }
     }
 }
 

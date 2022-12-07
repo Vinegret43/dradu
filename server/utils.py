@@ -31,7 +31,7 @@ def close_conn(sock: socket.socket):
     sock.close()
 
 
-# Reads stream from the socket until two empty lines are found, then returns.
+# Reads stream from the socket until one empty line is found, then returns.
 # Automatically decodes the header, since it should be valid ASCII, otherwise
 # raises UnicodeError
 def recv_message_header(sock: socket.socket) -> str:

@@ -1,12 +1,14 @@
 use eframe::egui::{Color32, ColorImage, Pos2};
 use egui_extras::RetainedImage;
 
+use directories::ProjectDirs;
+
 use json::JsonValue;
 
 use rand::{distributions::Alphanumeric, Rng};
 
 use std::io::Read;
-use std::path::{Component, Path};
+use std::path::{Component, Path, PathBuf};
 
 use crate::net::PROTOCOL_VERSION;
 use crate::DraduError;
@@ -84,6 +86,11 @@ pub fn json_to_pos(json: &JsonValue) -> Result<Pos2, ()> {
         }
     }
     Err(())
+}
+
+pub fn local_dir() -> Option<PathBuf> {
+    ProjectDirs::from("com.github", "vinegret43", "dradu")
+        .and_then(|p| Some(p.data_dir().to_path_buf()))
 }
 
 #[cfg(test)]

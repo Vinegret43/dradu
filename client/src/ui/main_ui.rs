@@ -8,13 +8,16 @@ use egui::{Align, Align2, Area, Color32, Context, Frame, Key, Layout, Ui};
 
 use clipboard::{ClipboardContext, ClipboardProvider};
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::state::RoomState;
 use crate::textures::Textures;
 use crate::ui::widgets::RelArea;
-use crate::ui::MapUi;
+use crate::ui::{MapUi, Window};
 use crate::DraduError;
+
+use crate::ui::window_tools::MapManager;
 
 //const HEADER: &str = concat!("DRADU ", env!("CARGO_PKG_VERSION"));
 const HEADER: &str = "DRADU ALPHA";
@@ -25,16 +28,23 @@ pub struct MainUi {
     buffers: Buffers,
     current_tab: Tab,
     cwd: PathBuf,
+    windowed_tools: HashMap<&'static str, WindowedTool>,
 }
 
 impl MainUi {
     pub fn new(textures: Textures) -> Self {
+        let mut windowed_tools = HashMap::new();
+        windowed_tools.insert(
+            "Map manager",
+            WindowedTool::new(Box::new(MapManager::default())),
+        );
         MainUi {
             map_ui: MapUi::default(),
             textures,
             buffers: Buffers::default(),
             current_tab: Tab::Chat,
             cwd: PathBuf::from(""),
+            windowed_tools,
         }
     }
 }
@@ -116,6 +126,13 @@ impl MainUi {
                 })
         });
         self.display_map_overlay_ui(ctx);
+
+        for tool in self.windowed_tools.values_mut() {
+            if tool.open {
+                tool.open = tool.win.show(ctx, room_state);
+            }
+        }
+
         Ok(())
     }
 
@@ -211,6 +228,24 @@ impl MainUi {
     }
 
     fn display_tools(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
+        self.display_grid_settings(ui, room_state);
+        ui.add_space(10.0);
+        self.display_windowed_tools(ui, room_state);
+    }
+
+    fn display_windowed_tools(&mut self, ui: &mut Ui, _room_state: &mut RoomState) {
+        ui.heading("Toolbox");
+        ui.indent("ui1", |ui| {
+            for (name, tool) in self.windowed_tools.iter_mut() {
+                ui.horizontal(|ui| {
+                    ui.label(*name);
+                    ui.checkbox(&mut tool.open, "");
+                });
+            }
+        });
+    }
+
+    fn display_grid_settings(&mut self, ui: &mut Ui, room_state: &mut RoomState) {
         ui.horizontal(|ui| {
             ui.heading("Grid");
             if ui.checkbox(&mut self.buffers.grid_enabled, "").changed() {
@@ -339,6 +374,17 @@ impl Default for Buffers {
             create_dir: None,
             chat_input: String::new(),
         }
+    }
+}
+
+struct WindowedTool {
+    open: bool,
+    win: Box<dyn Window>,
+}
+
+impl WindowedTool {
+    fn new(win: Box<dyn Window>) -> Self {
+        Self { open: false, win }
     }
 }
 

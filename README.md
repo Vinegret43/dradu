@@ -50,7 +50,7 @@ commands:
 
 ## Project roadmap for the near future
  - [ ] Add tokens with attributes (Health, armor, etc.)
- - [ ] Implement saving/loading entire maps
+ - [X] Implement saving/loading entire maps
  - [ ] Add ability to move objects up/down a layer
  - [ ] Dice rolling
  - [ ] Built-in loopback server used for creating maps

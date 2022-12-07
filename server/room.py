@@ -196,6 +196,11 @@ class Room:
 
     def update_map(self, json: dict) -> dict:
         delta = {}
+
+        if json == None:
+            self.map = {}
+            return None
+
         for id, entry in json.items():
             if id == "background":
                 delta["background"] = {"path": entry["path"]}

@@ -128,9 +128,17 @@ impl<'a> RoomState {
         self.connection.send_msg(message)
     }
 
-    pub fn request_file(&mut self, path: &str) {
-        let msg = Message::new(MsgType::File).set_prop("path", path);
-        self.send_msg(msg);
+    pub fn request_file(&mut self, path: &str) -> Result<(), DraduError> {
+        if self.master {
+            if !self.images.contains_key(path) {
+                let image = self.fs.get_retained_image(path)?;
+                self.add_image(path, image);
+            }
+        } else {
+            let msg = Message::new(MsgType::File).set_prop("path", path);
+            self.send_msg(msg)?;
+        }
+        Ok(())
     }
 
     pub fn quit_room(&mut self) {
@@ -203,6 +211,12 @@ impl<'a> RoomState {
         }
     }
 
+    pub fn clear_map(&mut self) {
+        let mut msg = Message::new(MsgType::Map);
+        msg.attach_body(MsgBody::Json(JsonValue::Null));
+        self.send_msg(msg);
+    }
+
     pub fn rescale_map_object(&mut self, id: &str, scale: f32) {
         if self.map.objects.contains_key(id) {
             let mut msg = Message::new(MsgType::Map);
@@ -273,7 +287,7 @@ impl<'a> RoomState {
                 } else {
                     let obj = MapObject::create_from_json(&entry)?;
                     if !self.images.contains_key(obj.path()) {
-                        self.request_file(obj.path())
+                        self.request_file(obj.path())?;
                     }
                     self.map.objects.insert(id.to_string(), obj);
                 }
@@ -298,7 +312,7 @@ impl<'a> RoomState {
         let path = json["path"].as_str().ok_or(DraduError::ProtocolError)?;
         self.map.background_image = Some(String::from(path));
         if !self.images.contains_key(path) {
-            self.request_file(path)
+            self.request_file(path)?;
         }
         Ok(())
     }
