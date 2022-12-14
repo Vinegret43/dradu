@@ -2,8 +2,6 @@ use eframe::egui;
 use egui::containers::ScrollArea;
 use egui::{Align, Context, Layout, Ui};
 
-use json::JsonValue;
-
 use std::fs::{self, File, ReadDir};
 use std::path::{Path, PathBuf};
 
@@ -189,7 +187,10 @@ impl MapHandler {
 
     fn load_map<T: AsRef<Path>>(&self, name: T, room_state: &mut RoomState) -> std::io::Result<()> {
         let path = self.get_map_path_by_name(name)?;
-        let json = JsonValue::from(fs::read_to_string(path)?);
+        let json = match json::parse(&fs::read_to_string(path)?) {
+            Ok(j) => j,
+            Err(e) => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e)),
+        };
         let mut msg = Message::new(MsgType::Map);
         msg.attach_body(MsgBody::Json(json));
         room_state.clear_map();

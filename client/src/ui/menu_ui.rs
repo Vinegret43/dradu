@@ -67,6 +67,9 @@ impl MenuUi {
                         }
                     }
                 });
+                if ui.button("Map creator").clicked() {
+                    response = MenuAction::MapCreator;
+                }
                 if ui.button("Settings").clicked() {
                     self.settings_ui.is_opened = true;
                 }
@@ -82,5 +85,6 @@ impl MenuUi {
 pub enum MenuAction {
     JoinRoom(SocketAddr, String),
     NewRoom(SocketAddr),
+    MapCreator,
     None,
 }

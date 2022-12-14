@@ -93,6 +93,9 @@ impl eframe::App for DraduApp {
                         Self::set_nickname_and_color(&self.config, s);
                     }
                 }
+                MenuAction::MapCreator => {
+                    *state = Some(RoomState::create_local_server(ctx));
+                }
                 MenuAction::None => (),
             },
         }

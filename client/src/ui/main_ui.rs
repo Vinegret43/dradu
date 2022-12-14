@@ -390,7 +390,7 @@ impl WindowedTool {
 
 fn repr_player(color: Color32, nick: &str, id: &str) -> Label {
     Label::new(
-        RichText::new(format!("{}#{}", nick, &id[..4]))
+        RichText::new(format!("{}#{}", nick, &id.get(..4).unwrap_or("")))
             .color(color)
             .strong(),
     )

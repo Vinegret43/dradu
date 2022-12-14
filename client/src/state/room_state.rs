@@ -9,7 +9,7 @@ use std::net::SocketAddr;
 use std::path::Path;
 
 use crate::fs::AssetDirHandler;
-use crate::net::{Connection, Message, MsgBody, MsgType};
+use crate::net::{Connection, LoopbackConnection, Message, MsgBody, MsgType, ServerConnection};
 use crate::state::map::{MapObject, MapState};
 use crate::utils;
 use crate::DraduError;
@@ -23,7 +23,7 @@ pub struct RoomState {
     // permissions
     chat_log: Vec<ChatMessage>,
     master: bool,
-    connection: Connection,
+    connection: Box<dyn Connection>,
     fs: AssetDirHandler,
 
     players: HashMap<String, (String, Color32)>, // Id: (Nickname, Color)
@@ -35,16 +35,21 @@ pub struct RoomState {
 
 impl<'a> RoomState {
     pub fn join_room(addr: SocketAddr, room_id: &str, ctx: &Context) -> Result<Self, DraduError> {
-        let connection = Connection::join_room(addr, room_id, ctx)?;
-        Ok(Self::with_connection(connection, false))
+        let connection = ServerConnection::join_room(addr, room_id, ctx)?;
+        Ok(Self::with_connection(Box::new(connection), false))
     }
 
     pub fn create_new_room(addr: SocketAddr, ctx: &Context) -> Result<Self, DraduError> {
-        let connection = Connection::create_new_room(addr, ctx)?;
-        Ok(Self::with_connection(connection, true))
+        let connection = ServerConnection::create_new_room(addr, ctx)?;
+        Ok(Self::with_connection(Box::new(connection), true))
     }
 
-    fn with_connection(connection: Connection, master: bool) -> Self {
+    pub fn create_local_server(ctx: &Context) -> Self {
+        let connection = LoopbackConnection::new(ctx);
+        Self::with_connection(Box::new(connection), true)
+    }
+
+    fn with_connection(connection: Box<dyn Connection>, master: bool) -> Self {
         let mut images = HashMap::new();
         images.insert("placeholder".to_string(), utils::get_placeholder_image());
 
@@ -271,7 +276,6 @@ impl<'a> RoomState {
         if json.is_null() {
             self.map = MapState::default();
         }
-
         for (id, entry) in json.entries() {
             // Firstly checking for special-case scenarios
             if id == "grid" {

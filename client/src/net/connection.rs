@@ -15,7 +15,17 @@ use crate::DraduError;
 
 const PE: DraduError = DraduError::ProtocolError;
 
-pub struct Connection {
+pub trait Connection {
+    fn new_messages(&mut self) -> Result<Vec<Message>, DraduError>;
+    fn send_msg(&mut self, msg: Message) -> Result<usize, DraduError>;
+    fn get_room_address(&self) -> Result<String, DraduError>;
+    fn close(&mut self);
+    fn get_user_id(&self) -> &str;
+    fn get_nickname(&self) -> &str;
+    fn get_user_color(&self) -> Color32;
+}
+
+pub struct ServerConnection {
     user_id: String,
     user_cookie: String,
     nickname: String,
@@ -25,7 +35,7 @@ pub struct Connection {
     receiver: Receiver<Message>,
 }
 
-impl Connection {
+impl ServerConnection {
     pub fn join_room(addr: SocketAddr, room_id: &str, ctx: &Context) -> Result<Self, DraduError> {
         let mut stream = TcpStream::connect(addr)?;
 
@@ -50,7 +60,7 @@ impl Connection {
         let nickname = json["nickname"].as_str().unwrap_or("").to_string();
         let user_color = utils::color32_from_json_value(&json["color"]).unwrap_or(Color32::WHITE);
 
-        Ok(Connection {
+        Ok(ServerConnection {
             user_id,
             user_cookie,
             user_color,
@@ -81,7 +91,7 @@ impl Connection {
         let user_color = utils::color32_from_json_value(&json["color"]).unwrap_or(Color32::WHITE);
         let room_id = json["roomId"].as_str().ok_or(PE)?.to_string();
 
-        Ok(Connection {
+        Ok(ServerConnection {
             user_id,
             user_cookie,
             nickname,
@@ -91,8 +101,10 @@ impl Connection {
             receiver,
         })
     }
+}
 
-    pub fn new_messages(&self) -> Result<Vec<Message>, DraduError> {
+impl Connection for ServerConnection {
+    fn new_messages(&mut self) -> Result<Vec<Message>, DraduError> {
         let mut messages = Vec::new();
         loop {
             match self.receiver.try_recv() {
@@ -104,18 +116,18 @@ impl Connection {
         Ok(messages)
     }
 
-    pub fn send_msg(&mut self, msg: Message) -> Result<usize, DraduError> {
+    fn send_msg(&mut self, msg: Message) -> Result<usize, DraduError> {
         let msg = msg
             .set_prop("userId", &self.user_id)
             .set_prop("userCookie", &self.user_cookie);
         Ok(self.stream.write(&msg.into_bytes())?)
     }
 
-    pub fn get_room_address(&self) -> Result<String, DraduError> {
+    fn get_room_address(&self) -> Result<String, DraduError> {
         Ok(format!("{}#{}", self.stream.peer_addr()?, self.room_id))
     }
 
-    pub fn close(&mut self) {
+    fn close(&mut self) {
         #[allow(unused)]
         {
             self.stream.shutdown(Shutdown::Both);
@@ -124,16 +136,66 @@ impl Connection {
         self.receiver = mpsc::channel().1;
     }
 
-    pub fn get_user_id(&self) -> &str {
+    fn get_user_id(&self) -> &str {
         &self.user_id
     }
 
-    pub fn get_nickname(&self) -> &str {
+    fn get_nickname(&self) -> &str {
         &self.nickname
     }
 
-    pub fn get_user_color(&self) -> Color32 {
+    fn get_user_color(&self) -> Color32 {
         self.user_color
+    }
+}
+
+// A local server used for creating maps. It basically just echoes (Loops back)
+// all messages you send
+pub struct LoopbackConnection {
+    message_queue: Option<Vec<Message>>,
+    ctx: Context,
+    closed: bool,
+}
+
+impl LoopbackConnection {
+    pub fn new(ctx: &Context) -> Self {
+        Self {
+            message_queue: Some(Vec::new()),
+            ctx: ctx.clone(),
+            closed: false,
+        }
+    }
+}
+
+impl Connection for LoopbackConnection {
+    fn new_messages(&mut self) -> Result<Vec<Message>, DraduError> {
+        if self.closed {
+            Err(DraduError::ChannelDisconnected)
+        } else {
+            let vec = self.message_queue.take().unwrap();
+            self.message_queue = Some(Vec::new());
+            Ok(vec)
+        }
+    }
+    fn send_msg(&mut self, msg: Message) -> Result<usize, DraduError> {
+        self.message_queue.as_mut().unwrap().push(msg);
+        self.ctx.request_repaint();
+        Ok(0)
+    }
+    fn get_room_address(&self) -> Result<String, DraduError> {
+        Ok("local".to_string())
+    }
+    fn get_user_id(&self) -> &str {
+        ""
+    }
+    fn get_nickname(&self) -> &str {
+        "Master"
+    }
+    fn get_user_color(&self) -> Color32 {
+        Color32::RED
+    }
+    fn close(&mut self) {
+        self.closed = true;
     }
 }
 

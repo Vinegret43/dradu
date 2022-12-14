@@ -53,4 +53,4 @@ commands:
  - [X] Implement saving/loading entire maps
  - [ ] Add ability to move objects up/down a layer
  - [ ] Dice rolling
- - [ ] Built-in loopback server used for creating maps
+ - [X] Built-in loopback server used for creating maps
