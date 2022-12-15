@@ -1,3 +1,10 @@
+
+# General notes
+
+Connection is always kept alive since it's going both ways. Socket disconnect
+is equivalent to client disconnect.
+Default port is 8889, but custom can be used
+
 # Protocol versioning
 
 Protocol version is in form of `MAJOR.MINOR`. MAJOR is incremented when changes

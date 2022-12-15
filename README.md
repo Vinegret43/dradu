@@ -54,3 +54,4 @@ commands:
  - [ ] Add ability to move objects up/down a layer
  - [ ] Dice rolling
  - [X] Built-in loopback server used for creating maps
+ - [ ] Implement permissions for certains actions

@@ -270,7 +270,6 @@ impl<'a> RoomState {
         self.players.get(id)
     }
 
-    // TODO: Refactor this method
     fn update_map(&mut self, json: JsonValue) -> Result<(), DraduError> {
         // Reset entire map
         if json.is_null() {

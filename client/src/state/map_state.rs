@@ -1,5 +1,3 @@
-// TODO: Setting background image. Move to IndexedMap from HashMap to implement layering
-
 use eframe::egui;
 use egui::Pos2;
 

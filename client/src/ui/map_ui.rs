@@ -6,7 +6,7 @@ use crate::state::RoomState;
 use crate::ui::widgets::{self, Dragging, RelArea, RelAreaResponse};
 
 pub struct MapUi {
-    pub global_scale: f32, // TODO: Make this useful
+    pub global_scale: f32,
     last_dragged_pos: Pos2,
     selected_object: Option<String>,
     selected_object_scale: f32,
@@ -239,6 +239,6 @@ impl<'a> DisplayObject<'a> {
         resp: &RelAreaResponse<()>,
         token: &Token,
     ) -> MapAction {
-        MapAction::None // TODO
+        MapAction::None
     }
 }

@@ -31,7 +31,12 @@ impl Display for DraduError {
             Self::ChannelDisconnected => write!(f, "Channel disconnected"),
             Self::TimeoutExceeded => write!(f, "Server response timeout exceeded"),
             Self::Io(err) => write!(f, "{}", err),
-            _ => Ok(()), // TODO
+            Self::ProjectDirNotFound => write!(
+                f,
+                "Project dir not found. Probably running in a web environment"
+            ),
+            Self::InvalidPath => write!(f, "Invalid path"),
+            Self::ImageLoadError(err) => write!(f, "Could not load image: {}", err),
         }
     }
 }

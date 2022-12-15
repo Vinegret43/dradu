@@ -50,7 +50,6 @@ impl DraduApp {
     }
 
     // Called after player left the room (Disconnected)
-    // FIXME: add ability to reconnect again without loosing all the data
     fn reset(&mut self) {
         self.main_ui = MainUi::new(self.textures.clone());
         self.menu_ui = MenuUi::new(self.textures.clone(), &self.config);
