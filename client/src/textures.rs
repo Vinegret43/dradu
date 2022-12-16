@@ -88,8 +88,10 @@ macro_rules! add_themed_texture {
     }};
 }
 
-fn load_textures(_ctx: &Context) -> HashMap<String, TextureHandle> {
-    let map = HashMap::new();
+fn load_textures(ctx: &Context) -> HashMap<String, TextureHandle> {
+    let mut map = HashMap::new();
+
+    add_texture!(ctx, map, "resize", [32, 32]);
 
     map
 }

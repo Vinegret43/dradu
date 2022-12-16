@@ -1,12 +1,14 @@
 use eframe::egui;
-use egui::{Color32, Frame, Image, Pos2, Rect, Response, Stroke, Ui, Vec2};
+use egui::{Area, Color32, Frame, Image, Pos2, Rect, Response, Stroke, Ui, Vec2};
 
 use crate::state::map::{MapObject, Token};
 use crate::state::RoomState;
 use crate::ui::widgets::{self, Dragging, RelArea, RelAreaResponse};
+use crate::Textures;
 
 pub struct MapUi {
     pub global_scale: f32,
+    textures: Textures,
     last_dragged_pos: Pos2,
     selected_object: Option<String>,
     selected_object_scale: f32,
@@ -15,10 +17,11 @@ pub struct MapUi {
     map_size: Option<Vec2>,
 }
 
-impl Default for MapUi {
-    fn default() -> Self {
+impl MapUi {
+    pub fn new(textures: Textures) -> Self {
         Self {
             global_scale: 1.0,
+            textures,
             last_dragged_pos: Pos2::new(0.0, 0.0),
             selected_object: None,
             selected_object_scale: 1.0,
@@ -52,14 +55,14 @@ impl MapUi {
             let mut display_object = DisplayObject {
                 id: &id,
                 global_scale: self.global_scale,
-                additional_scale_factor: 1.0,
+                rescale_factor: 1.0,
                 map_object: obj,
                 room_state: room_state,
                 frame_enabled: false,
             };
             let resp = match &self.selected_object {
                 Some(sel_id) if id == sel_id => {
-                    display_object.additional_scale_factor = self.selected_object_scale;
+                    display_object.rescale_factor = self.selected_object_scale;
                     display_object.frame_enabled = true;
                     if let Some(snap_to) = self.snap_to {
                         display_object.place_as_snapping_guide(ui, snap_to)
@@ -67,8 +70,10 @@ impl MapUi {
                     let resp = display_object.place(ui);
                     // Additional UI
                     map_action = map_action.or(display_object.draw_ui(ui, &resp));
+                    map_action = map_action.or(self.draw_resize_slider(&display_object, ui, &resp));
                     if resp.response.clicked_elsewhere() {
                         self.selected_object = None;
+                        self.selected_object_scale = 1.0;
                     }
                     resp
                 }
@@ -77,6 +82,33 @@ impl MapUi {
             map_action = map_action.or(self.process_object_response(&display_object, resp));
         }
         map_action.apply(room_state);
+    }
+
+    fn draw_resize_slider(
+        &mut self,
+        obj: &DisplayObject,
+        ui: &mut Ui,
+        resp: &RelAreaResponse<()>,
+    ) -> MapAction {
+        let slider_resp = Area::new("resize")
+            .current_pos(resp.response.rect.max - Vec2::new(16.0, 16.0))
+            .show(ui.ctx(), |ui| {
+                ui.image(&self.textures["resize"], [16.0, 16.0]);
+            })
+            .response;
+        let curr_rect_size = resp.response.rect.size();
+        let new_rect_size = curr_rect_size - slider_resp.drag_delta();
+        self.selected_object_scale *= (curr_rect_size / new_rect_size).min_elem();
+        if slider_resp.drag_released() {
+            let action = MapAction::Rescale(
+                obj.id.to_string(),
+                obj.map_object.scale() * self.selected_object_scale,
+            );
+            self.selected_object_scale = 1.0;
+            action
+        } else {
+            MapAction::None
+        }
     }
 
     fn process_object_response<T>(
@@ -163,7 +195,7 @@ impl MapAction {
 struct DisplayObject<'a> {
     pub id: &'a str,
     pub global_scale: f32,
-    pub additional_scale_factor: f32,
+    pub rescale_factor: f32,
     pub map_object: &'a MapObject,
     pub room_state: &'a RoomState,
     pub frame_enabled: bool,
@@ -179,7 +211,7 @@ impl<'a> DisplayObject<'a> {
                 .show_inside(ui, |ui| {
                     image.show_scaled(
                         ui,
-                        self.map_object.scale() * self.global_scale * self.additional_scale_factor,
+                        self.map_object.scale() * self.global_scale * self.rescale_factor,
                     );
                 }),
             _ => unimplemented!(),
@@ -201,10 +233,8 @@ impl<'a> DisplayObject<'a> {
     // This will make the object non-interactive and slightly transparent
     pub fn place_as_snapping_guide(&self, ui: &mut Ui, pos: Pos2) {
         let image = self.room_state.get_image(self.map_object.path());
-        let size = image.size_vec2()
-            * self.map_object.scale()
-            * self.global_scale
-            * self.additional_scale_factor;
+        let size =
+            image.size_vec2() * self.map_object.scale() * self.global_scale * self.rescale_factor;
         let opaque_image = Image::new(image.texture_id(ui.ctx()), size)
             .tint(Color32::from_rgba_unmultiplied(255, 255, 255, 120));
         let pos = ui.min_rect().min + pos.to_vec2();

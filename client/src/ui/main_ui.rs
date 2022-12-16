@@ -39,7 +39,7 @@ impl MainUi {
             WindowedTool::new(Box::new(MapManager::default())),
         );
         MainUi {
-            map_ui: MapUi::default(),
+            map_ui: MapUi::new(textures.clone()),
             textures,
             buffers: Buffers::default(),
             current_tab: Tab::Chat,

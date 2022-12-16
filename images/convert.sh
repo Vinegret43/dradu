@@ -28,7 +28,7 @@ log "Converting images in ./source/general. Copy/paste this into load_textures()
 
 for file in $(ls "./source/general"); do
   name=${file%.*}
-  inkscape "./source/general/$file" -o "./png/light/name.png" &> /dev/null
+  inkscape "./source/general/$file" -o "./.png/general/$name.png" &> /dev/null
   convert "./.png/general/$name.png" -depth 8 "./rgba/$name.rgba"
   resolution=$(identify "./source/general/$file" | grep -o '\w*x\w* ' | sed 's/ //;s/x/, /')
   echo "add_texture!(ctx, map, \"$name\", [$resolution]);"
