@@ -32,8 +32,6 @@ impl MapUi {
     }
 }
 
-// FIXME: When resizing object its size may become negative since there
-// are no checks for that
 impl MapUi {
     pub fn update(&mut self, ui: &mut Ui, room_state: &mut RoomState) -> Response {
         Frame::none()
@@ -97,8 +95,10 @@ impl MapUi {
             })
             .response;
         let curr_rect_size = resp.response.rect.size();
-        let new_rect_size = curr_rect_size - slider_resp.drag_delta();
-        self.selected_object_scale *= (curr_rect_size / new_rect_size).min_elem();
+        let new_rect_size = curr_rect_size + slider_resp.drag_delta();
+        if new_rect_size.min_elem() >= 24.0 {
+            self.selected_object_scale *= (new_rect_size / curr_rect_size).min_elem();
+        }
         if slider_resp.drag_released() {
             let action = MapAction::Rescale(
                 obj.id.to_string(),
