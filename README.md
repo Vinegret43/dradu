@@ -2,7 +2,7 @@
 # Dradu
 
 The goal of this project is to make a FOSS virtual tabletop tool which is able
-to run both natively and in browser - make a better replacement for those
+to run both natively and in browser - make a better alternative for those
 proprietary and laggy VTTs
 
 
@@ -49,9 +49,11 @@ commands:
  - `/color <R> <G> <B>` - Change your nickname color. RGB values are from 0 to 255
 
 ## Project roadmap for the near future
- - [ ] Add tokens with attributes (Health, armor, etc.)
+ - [X] Add tokens with attributes (Health, armor, etc.)
  - [X] Implement saving/loading entire maps
  - [ ] Add ability to move objects up/down a layer
  - [ ] Dice rolling
  - [X] Built-in loopback server used for creating maps
- - [ ] Implement permissions for certains actions
+ - [ ] Implement permissions for certain actions
+ - [ ] Rewrite user interface in something else (Maybe `iced`?)
+  since `egui` doesn't seem like a good fit anymore

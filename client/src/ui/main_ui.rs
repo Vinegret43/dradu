@@ -310,10 +310,13 @@ impl MainUi {
                     if is_dir {
                         self.cwd = self.cwd.join(filename.as_ref());
                     } else {
-                        room_state.insert_decal(self.cwd.join(filename.as_ref()));
+                        room_state.insert_from_path(self.cwd.join(filename.as_ref()), "decal");
                     }
                 }
                 resp.context_menu(|ui| {
+                    if ui.button("Add as token").clicked() {
+                        room_state.insert_from_path(self.cwd.join(filename.as_ref()), "token");
+                    }
                     if ui.button("Set as BG image").clicked() {
                         room_state.set_background_image(self.cwd.join(filename.as_ref()));
                     }

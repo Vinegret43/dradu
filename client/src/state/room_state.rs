@@ -157,7 +157,11 @@ impl<'a> RoomState {
         self.send_msg(msg);
     }
 
-    pub fn insert_decal<P: AsRef<Path>>(&mut self, path: P) -> Result<(), DraduError> {
+    pub fn insert_from_path<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        obj_type: &str,
+    ) -> Result<(), DraduError> {
         let path = path.as_ref();
         let path_str = path.to_str().unwrap();
         if !self.images.contains_key(path_str) {
@@ -166,7 +170,7 @@ impl<'a> RoomState {
         }
         let mut msg = Message::new(MsgType::Map);
         let inner_json = object! {
-            "type": "decal",
+            "type": obj_type,
             "path": path_str
         };
         let mut json = JsonValue::new_object();
@@ -230,6 +234,29 @@ impl<'a> RoomState {
             json[id] = inner_json;
             msg.attach_body(MsgBody::Json(json));
             self.send_msg(msg);
+        }
+    }
+
+    pub fn update_token_property(&mut self, id: &str, key: &str, val: &str) {
+        self.change_token_property(id, key, JsonValue::from(val.trim()))
+    }
+
+    pub fn remove_token_property(&mut self, id: &str, key: &str) {
+        self.change_token_property(id, key, JsonValue::Null);
+    }
+
+    fn change_token_property(&mut self, id: &str, key: &str, val: JsonValue) {
+        if let Some(MapObject::Token(_)) = self.map.objects.get(id) {
+            let key = key.trim();
+            if !key.is_empty() {
+                let mut msg = Message::new(MsgType::Map);
+                let mut inner_json = object! {"properties": {}};
+                inner_json["properties"][key] = val;
+                let mut json = JsonValue::new_object();
+                json[id] = inner_json;
+                msg.attach_body(MsgBody::Json(json));
+                self.send_msg(msg);
+            }
         }
     }
 

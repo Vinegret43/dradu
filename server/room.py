@@ -224,27 +224,41 @@ class Room:
             if not entry:
                 del self.map[id]
                 delta[id] = {}
-            elif id in self.map:
-                delta[id] = {}
-                if (
-                    "pos" in entry
-                    and type(entry["pos"]) is list
-                    and len(entry["pos"]) == 2
-                ):
-                    delta[id]["pos"] = entry["pos"]
-                    self.map[id]["pos"] = entry["pos"]
-                if "scale" in entry and type(entry["scale"]) is float:
-                    delta[id]["scale"] = entry["scale"]
-                    self.map[id]["scale"] = entry["scale"]
-                if not delta[id]:
-                    del delta[id]
             else:
-                obj = {
-                    "type": entry["type"],
-                    "path": entry["path"],
-                    "pos": entry.get("pos", [0.0, 0.0]),
-                    "scale": entry.get("scale", 1.0),
-                }
-                self.map[id] = obj
-                delta[id] = obj
+                if id in self.map:
+                    delta[id] = {}
+                    if "pos" in entry:
+                        delta[id]["pos"] = entry["pos"]
+                        self.map[id]["pos"] = entry["pos"]
+                    if "scale" in entry:
+                        delta[id]["scale"] = entry["scale"]
+                        self.map[id]["scale"] = entry["scale"]
+
+                    if self.map[id]["type"] == "token" and "properties" in entry:
+                        delta[id]["properties"] = {}
+                        for key, value in entry["properties"].items():
+                            if value is None:
+                                del self.map[id]["properties"][key]
+                                delta[id]["properties"][key] = None
+                            else:
+                                self.map[id]["properties"][key] = value
+                                delta[id]["properties"][key] = value
+
+                        if not delta[id]["properties"]:
+                            del delta[id]["properties"]
+
+                    if not delta[id]:
+                        del delta[id]
+                else:
+                    obj = {
+                        "type": entry["type"],
+                        "path": entry["path"],
+                        "pos": entry.get("pos", [0.0, 0.0]),
+                        "scale": entry.get("scale", 1.0),
+                    }
+                    if entry["type"] == "token":
+                        obj["properties"] = entry.get("properties", {})
+                    self.map[id] = obj
+                    delta[id] = obj
+
         return delta

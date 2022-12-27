@@ -204,6 +204,7 @@ dependencies = [
  "clipboard",
  "directories",
  "eframe",
+ "egui",
  "egui_extras",
  "image",
  "indexmap",
@@ -286,6 +287,12 @@ dependencies = [
  "libc",
  "objc",
 ]
+
+[[package]]
+name = "color-hex"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecdffb913a326b6c642290a0d0ec8e8d6597291acdc07cc4c9cb4b3635d44cf9"
 
 [[package]]
 name = "color_quant"
@@ -671,6 +678,7 @@ dependencies = [
  "ahash 0.8.0",
  "atomic_refcell",
  "bytemuck",
+ "color-hex",
  "emath",
  "nohash-hasher",
  "parking_lot",

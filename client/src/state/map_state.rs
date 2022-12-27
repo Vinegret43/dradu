@@ -5,6 +5,8 @@ use json::{object, JsonValue};
 
 use indexmap::IndexMap;
 
+use std::collections::HashMap;
+
 use crate::utils;
 use crate::DraduError;
 
@@ -29,7 +31,7 @@ impl MapState {
     pub fn as_json(&self) -> JsonValue {
         let mut json = object! {};
         if let Some(grid) = self.grid {
-            json["gird"] = object! {
+            json["grid"] = object! {
                 "size": grid.to_vec(),
             };
         }
@@ -146,7 +148,7 @@ pub struct Token {
     pub scale: f32,
     pub path: String,
     // Additional things like health, armor, etc.
-    pub properties: JsonValue,
+    pub properties: HashMap<String, String>,
 }
 
 impl Token {
@@ -157,10 +159,22 @@ impl Token {
         if let Some(scale) = json["scale"].as_f32() {
             self.scale = scale;
         }
+        for (k, v) in json["properties"].entries() {
+            if v.is_null() {
+                self.properties.remove(k);
+            } else {
+                self.properties.insert(k.to_string(), v.to_string());
+            }
+        }
         Ok(())
     }
 
     fn create_from_json(json: &JsonValue) -> Result<Self, DraduError> {
+        let mut properties = HashMap::new();
+        for (k, v) in json["properties"].entries() {
+            properties.insert(k.to_string(), v.to_string());
+        }
+
         Ok(Self {
             pos: utils::json_to_pos(&json["pos"]).unwrap_or(Pos2::new(0.0, 0.0)),
             scale: json["scale"].as_f32().unwrap_or(1.0),
@@ -168,13 +182,13 @@ impl Token {
                 .as_str()
                 .ok_or(DraduError::ProtocolError)?
                 .to_owned(),
-            properties: json["properties"].clone(),
+            properties,
         })
     }
 
     fn as_json(&self) -> JsonValue {
         object! {
-            "type": "decal",
+            "type": "token",
             "pos": [self.pos.x, self.pos.y],
             "scale": self.scale,
             "path": self.path.clone(),
