@@ -303,11 +303,8 @@ impl<'a> DisplayObject<'a> {
             ui_state.edited_value = None;
         }
 
-        Window::new("token")
-            .title_bar(false)
-            .collapsible(false)
+        Window::new("Token properties")
             .show(ui.ctx(), |ui| {
-                ui.heading("Properties");
                 if let Some(ref mut key) = ui_state.edited_key {
                     if let Some(ref mut val) = ui_state.edited_value {
                         // Editing value

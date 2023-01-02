@@ -1,9 +1,11 @@
 from main import PROTOCOL_VERSION
 from message import Message
 
+import re
 import socket
 import random
 import string
+import operator
 
 
 def bind_socket(addr: tuple[str, int]) -> socket.socket:
@@ -79,3 +81,35 @@ def recv_exact(sock: socket.socket, to_recv: int) -> bytes:
         to_recv -= len(recved)
         b += recved
     return b
+
+
+operators = {
+    "+": operator.add,
+    "-": operator.sub,
+}
+
+# Raises on any error in the query
+def roll_dice(query: str) -> int:
+    # Using parenteses in re to keep delimiters
+    tokens = list(filter(lambda s: s and not s.isspace(), re.split("([ \+-])", query)))
+
+    if tokens[0] == '-':
+        operation = operator.sub
+        tokens = tokens[1:]
+    else:
+        operation = operator.add
+
+    result = 0
+    for t in tokens:
+        if operation:
+            if "d" in t:
+                rolls, dice = t.split("d")
+                for _ in range(int(rolls)):
+                    result = operation(result, random.randint(1, int(dice)))
+            else:
+                result = operation(result, int(t))
+            operation = None
+        else:
+            operation = operators[t]
+
+    return result

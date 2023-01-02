@@ -11,11 +11,14 @@ proprietary and laggy VTTs
 
 ## Current state
 
-This project is SO raw it's not even usable, however, this
-should change in 2-3 months or so. The main reason for uploading this to GH is
-just to have a code backup and be able to work on this from different machines.
-You really shouldn't look into this repo right now, but maybe after some time
-this project will actually be worth something
+This project is *kinda* usable if you are tech savvy (Ready to dig through
+the source code) and aren't afraid of occasional bugs or inconveniences.
+For everyone else this project is still too raw for actual use
+
+Some mistakes were made during Dradu designing, so right now this project is
+staged for a rewrite. The goals are: transition from `egui` to something else
+(Presumably `iced`), rewrite server in Rust using async code, transition from
+using TCP sockets to WebSockets and HTTP
 
 
 ## Running and using the program
@@ -47,13 +50,12 @@ commands:
 
  - `/nickname <NAME>` `/nick <NAME>` - Change your nickname
  - `/color <R> <G> <B>` - Change your nickname color. RGB values are from 0 to 255
+ - `/roll <QUERY>` `/r <QUERY>` - Roll a dice. Exmple: `/r 2d20 + 3`
 
 ## Project roadmap for the near future
  - [X] Add tokens with attributes (Health, armor, etc.)
  - [X] Implement saving/loading entire maps
  - [ ] Add ability to move objects up/down a layer
- - [ ] Dice rolling
+ - [X] Dice rolling
  - [X] Built-in loopback server used for creating maps
  - [ ] Implement permissions for certain actions
- - [ ] Rewrite user interface in something else (Maybe `iced`?)
-  since `egui` doesn't seem like a good fit anymore

@@ -190,13 +190,13 @@ impl MainUi {
                     .stick_to_bottom(true)
                     .show(ui, |ui| {
                         for chat_msg in room_state.chat_log_ref() {
-                            let player = match room_state.get_player_by_id(&chat_msg.sender_id) {
-                                Some(p) => p,
-                                None => continue,
+                            let (nickname, color) = match room_state.get_player_by_id(&chat_msg.sender_id) {
+                                Some(p) => (&p.0, p.1.clone()),
+                                None => (&chat_msg.sender_id, Color32::GRAY),
                             };
                             ui.add(repr_player(
-                                player.1.clone(),
-                                &player.0,
+                                color,
+                                &nickname,
                                 &chat_msg.sender_id,
                             ));
                             ui.label(&chat_msg.text);

@@ -112,7 +112,33 @@ class Room:
     def process_chat_command(self, msg: Message, player_sock: socket.socket):
         cmd = msg.body.decode()
         argv = cmd.split()
-        if argv[0] == "/color":
+        if argv[0] in ("/roll", "/r"):
+            player = self.players[self.player_sockets.index(player_sock)]
+            try:
+                roll_query = cmd.split(maxsplit=1)[1]
+                result = utils.roll_dice(roll_query)
+            except:
+                msg = Message(
+                    "Msg",
+                    {
+                        "contentType": "text",
+                        "userId": "server",
+                    },
+                    b"Bad roll query",
+                ).send(player_sock)
+            else:
+                roll_query = " ".join(roll_query.split())
+                msg = Message(
+                    "Msg",
+                    {
+                        "contentType": "text",
+                        "userId": "server",
+                    },
+                    f"{player.nickname} rolls {roll_query} = {result}".encode(),
+                )
+                for sock in self.player_sockets:
+                    msg.send(sock)
+        elif argv[0] == "/color":
             if len(argv[1:]) == 3:
                 # int(x) also can throw an exception
                 try:
